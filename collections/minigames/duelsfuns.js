@@ -117,6 +117,16 @@ module.exports = {
             } 
             return 0
         })
+        
+        const healthAddRandomiser = function() {
+            return Math.floor(Math.random()*5)+10)
+        }
+        
+        const powerAddRandomiser = function() {
+            return Math.floor(Math.random()*10)+15)   
+        }
+        
+        
 
         //attack type moves
         const attackTypes = ['attack', '🔥', '💨', '⚡', '⛰️', '🌊']
@@ -239,7 +249,7 @@ module.exports = {
                     var speech = phrases.dodgeSpeech(playerNames[attackerIndex], playerNames[passiveIndex], outputType[attackerIndex], playerArray[attackerIndex], true)
 
                     //adding health to the successful dodger.
-                    players[passiveIndex].hpAdd(Math.floor(Math.random() * 5) + 10)
+                    players[passiveIndex].hpAdd(healthAddRandomiser())
 
                     // return the updated player objects, the speech 
                 } else {
@@ -281,10 +291,47 @@ module.exports = {
 
 
         } else {
-            // if both players don't attack or one of the players don't select a move.
+            // if both players dodge or block
+            if (passiveTypes.includes(playerArray[0]) && passiveTypes.includes(playerArray[1])) {
+                var speech = phrases.bothPassive(players[0], players[1])
+                // both dodge
+                if(playerArray[0] === playerArray[1] === 'dodge'){
+                    //adding health from both players.
+                    
+                    players[0].hpAdd(healthAddRandomiser())
+                    players[1].hpAdd(healthAddRandomiser())
+                
+                //both block
+                } else if (playerArray[0] === playerArray[1] === 'dodge') {
+                    //adding power to both players.
+                    
+                    players[0].ppAdd(powerAddRandomiser())  
+                    players[1].ppAdd(powerAddRandomiser())
+                
+                //one block one dodge
+                } else if (playerArray[0] === playerArray[1] === 'dodge') {
+                    
+                    //variable declirations 
+                    var dodgerIndex = playerArray.find((e, i) => {
+                        if (e === 'dodge') return i
+                    })
+                    var blockerIndex = otherIndex(dodgerIndex)
+                    
+                    
+                    //adding health and power
+                    
+                    players[dodgerIndex].hpAdd(healthAddRandomiser())
+                    players[blockerIndex].hpAdd(healthAddRandomiser())
+                
+                    
+                }
+                
+            //one dodges/blocks and one does nothing.
+            } else if (passiveTypes.includes(playerArray[0]) || passiveTypes.includes(playerArray[1])) {
+                
 
 
-
+            }
         }
         return [players, speech, playerNames[winnerIndex]]
 
