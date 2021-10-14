@@ -148,14 +148,27 @@ module.exports = {
                             forfeitButton,
                             drawButton
                         )
-
+                        
+                
+                    // a function to disable or enable all of the buttons.
                     const buttonDisable = function (status) {
                         buttonMoveRow.components.forEach((buttons) => buttons.disabled = status)
                         buttonForfeitRow.components.forEach((buttons) => buttons.disabled = status)      
                     }
 
+                    //information on the player which will be on the embed.
+                    const playerInfo = function(player) {
+                        return `**Health: ${player.hp}\n${bars(healthbar, player.hp)}\nPower: ${player.pp}\n${bars(powerbar, player.pp)}\nElemental power: ${player.element}**`
+                    }
 
 
+                    //information on the player used on the round log.
+                    const playerLogInfo = function(player, roundWinner) {
+                        return `**Selected move: ${player.move}\nCurrent Health: ${player.hp} [${player.logStringify(player.hpDiff)}]\nCurrent power: ${player.pp} [${player.logStringify(player.ppDiff)}]\n Round Winner: ${roundWinner}**`
+                    }
+
+
+                    // settings the class for the players.
                     class Player {
                         constructor(name) {
                             this.name = name
@@ -212,22 +225,29 @@ module.exports = {
                             return `-${value}`
                         }
                     }
+                    
+                    //setting the two instances for the class.
                     var player1 = new Player(message.author.username)
                     playerCount++
                     var player2 = new Player(member.displayName)
 
+
+
+                    //adding an array containing all the buttons to control them all simultaneously.
                     const allButtons = [attackButton, dodgeButton, guardButton, elementButton, forfeitButton, drawButton]
+                    
+                    //the embed signifying the start of the duel.
                     let embed = new Discord.MessageEmbed()
                         .setTitle(`A duel between ${message.author.username} and ${member.displayName} has begun!`)
                         .addFields(
                             {
                                 name: `${player1.name}`,
-                                value: `**Health: ${player1.hp}\n${bars(healthbar, player1.hp)}\nPower: ${player1.pp}\n${bars(powerbar, player1.pp)}\nElemental power: ${player1.element}**`
+                                value: playerInfo(player1)
                                 , inline: true
                             },
                             {
                                 name: `${player2.name}`,
-                                value: `**Health: ${player2.hp}\n${bars(healthbar, player2.hp)}\nPower: ${player2.pp}\n${bars(powerbar, player2.pp)}\nElemental power: ${player2.element}**`
+                                value: playerInfo(player2)
                                 , inline: true
                             }
                         )
@@ -239,8 +259,10 @@ module.exports = {
                     const moveCollector = duelEmbed.createMessageComponentCollector({ moveFilter, time: 30000 })
                     let commentaryMessage
 
-                    //moves button collector.
+                    //using promises so that parts of the code only executed in the correct order.
                     new Promise(async (resolve, reject) => {
+                        
+                        //getting the two players moves.
                         moveCollector.on('collect', async interaction => {
                             console.log(player1.move)
                             console.log(player2.move)
@@ -270,7 +292,7 @@ module.exports = {
                             interaction.deferUpdate();
 
                         })
-                        
+                        //once both players have selected their moves.
                         moveCollector.on('end', interaction => {
                             buttonDisable(true)
 
@@ -287,35 +309,45 @@ module.exports = {
                             }, 2000)
                         })
                     })
-                        .then(async() => {
-                            const moveSimulation = await moveWinner(player1, player2)
-                            await setTimeout(async () => {
+                        .then(() => {
+                            
+                            //once the both players have selected their move, the move simulation function is activated
+                            const moveSimulation = moveWinner(player1, player2)
+                            setTimeout(async () => {
                                 if (!moveSimulation) return message.channel.send('**Duel error ocurred. Sorry for the inconvenience.**');
                                 var moveSpeech = await `**${moveSimulation[1]}**`
                                 commentaryMessage.edit({content: moveSpeech})
                                 console.log(moveSimulation[0])
                                 player1 = moveSimulation[0][0]
                                 player2 = moveSimulation[0][1]
-
+                                //sending the commentary message to discord, then a few seconds after sending the log for that duel round.
                                 setTimeout(async () => {
                                     var testEmbed = await new Discord.MessageEmbed() 
                                         .setTitle(`Round ${moveCount} summary`)
                                         .addFields(
                                             {
                                                 name:`**${player1.name}**`,
-                                                value:`**Selected move: ${player1.move}\nCurrent Health: ${player1.hp} [${player1.logStringify(player1.hpDiff)}]\nCurrent power: ${player1.pp} [${player1.logStringify(player1.ppDiff)}]\n Round Winner: ${moveSimulation[2]}**`,
+                                                value: playerLogInfo(player1, moveSimulation[2]),
                                                 inline:true
                                             },
                                             {
                                                 name:`**${player2.name}**`,
-                                                value:`**Selected move: ${player2.move}\nCurrent Health: ${player2.hp} [${player2.logStringify(player2.hpDiff)}]\nCurrent power: ${player2.pp} [${player2.logStringify(player2.ppDiff)}]\n Round Winner: ${moveSimulation[2]}**`,
+                                                value: playerLogInfo(player2, moveSimulation[2]),
                                                 inline:true
                                             }
                                         )
                                     await commentaryMessage.edit({embeds: [testEmbed]})
-                                }, 5000)
-
-                            }, 3000)
+                                    
+                                    
+                                    //starting the next round
+                                    setTimeout(async() => {
+                                        await commentaryMessage.edit({embeds: [], content: `**Starting a new round...**`})
+                                    }. 7000)
+                                }, 10000)
+                                
+                            }, 2000)
+                            
+                            
                             
                         })
 
