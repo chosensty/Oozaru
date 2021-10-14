@@ -5,6 +5,8 @@ const { lightning_moves } = require('./duelsPhraseList')
 const chance = new Chance
 const phrases = require('./duelsPhraseList')
 module.exports = {
+    
+    // function used to compare elements and decide which one is superior.
     elementFun: function (e1, e2) {
         function indexCheck(index) {
             if (index <= -1) {
@@ -35,10 +37,8 @@ module.exports = {
             }
         }
     },
-    otherIndex: function (i) {
-        if (i === 0) return 1
-        return 0
-    },
+    
+    // getting the names for an attack.
     attackName: function (move) {
         if (move === '🔥') {
             return phrases.fire_moves[Math.floor(Math.random() * phrases.fire_moves.length)]
@@ -55,13 +55,25 @@ module.exports = {
         }
     },
 
+    //the important and main function of this file, this is where all the move simulation happens.
     moveWinner: function (player1, player2) {
+        
+        //simply randomising output.
         outputRandomiser = function (output) {
             const dice = chance.weighted(['heavy', 'normal'], [10, 90])
             return dice
         },
-            // player objects
-            players = [player1, player2]
+            
+            
+        otherIndex = function (i) {
+            if (i === 0) return 1
+            return 0
+        }    
+        
+        //VARIABLE DECLIRATION 
+        
+        // player objects
+        players = [player1, player2]
 
         // an array of all players
         const playerArray = [player1.move, player2.move]
@@ -74,11 +86,25 @@ module.exports = {
         const outputType = []
 
         const randomHitType = []
-        //statistical outputs
+        
+        
+        //statistical outputs for both players.
+        
         const playerOutputs = playerArray.map((player, index) => {
+            
+            //getting the weight of the output (normal or heavy)
             outputType[index] = outputRandomiser(player)
-            if (outputType[index] === 'normal') var multiplier = 1; randomHitType[index] = phrases.hits[Math.floor(Math.random() * phrases.hits.length)]
-            if (outputType[index] === 'heavy') var multiplier = 1.5; randomHitType[index] = phrases.hard_hit[Math.floor(Math.random() * phrases.hard_hit.length)]
+            
+            // the output type
+            if (outputType[index] === 'normal') {
+                var multiplier = 1
+                randomHitType[index] = phrases.hits[Math.floor(Math.random() * phrases.hits.length)]
+            } else {
+                var multiplier = 1.5
+                randomHitType[index] = phrases.hard_hit[Math.floor(Math.random() * phrases.hard_hit.length)]
+            }
+            
+            // getting the output for each type of move.
             if (player === 'attack') {
                 return (Math.floor(Math.random() * 6) + 10) * multiplier
             } else if (player === 'guard') {
@@ -88,12 +114,14 @@ module.exports = {
                 return (Math.floor(Math.floor() * 11) + 15) * multiplier
             } else if (player === 'dodge') {
                 return (Math.floor(Math.random() * 11) + 45) * multiplier
-            }
+            } 
+            return 0
         })
 
-
+        //attack type moves
         const attackTypes = ['attack', '🔥', '💨', '⚡', '⛰️', '🌊']
 
+        //passive type move
         const passiveTypes = ['guard', 'dodge']
         console.log(playerArray)
 
@@ -109,48 +137,86 @@ module.exports = {
                 // getting the dominant element/ player
                 const elemDom = elementFun(playerArray[0], playerArray[1])
                 console.log('element vs element')
-                //getting the winner of the trade off.]
+                //getting the winner of the trade off.
                 var winnerIndex = chance.weighted([elemDom[0], elemDom[1], 2, 3], [(35 * elemDom[2]), 35, 15, 15])
-                if (winnerIndex === 1 || winnerIndex === 0) var speech = phrases.elementVsElement(players[winnerIndex], players[this.otherIndex(winnerIndex)], winnerIndex); else phrases.elementVsElement(player1, player2, winnerIndex)
-            
+                if (winnerIndex < 2) {
+                var speech = phrases.elementVsElement(players[winnerIndex], players[this.otherIndex(winnerIndex)], winnerIndex)
+                } else { 
+                    var speech = phrases.elementVsElement(player1, player2, winnerIndex)
+                }
 
             // when both players are using physical attacks.
             
             } else if (playerArray[0] === 'attack' && playerArray[1] === 'attack') {
+                
                 // if both of them use physical attacks
                 var winnerIndex = chance.weighted([0, 1, 2, 3], [40, 40, 10, 10])
-                var loserIndex = this.otherIndex(winnerIndex)
+                var loserIndex = otherIndex(winnerIndex)
                 console.log('attack vs attack')
 
                 if (winnerIndex < 2) {
-                    var speech = phrases.attackVsAttack(players[winnerIndex], players[this.otherIndex(winnerIndex)], winnerIndex)
+                    
+                    // if there is a winner out of the 2
+                    var speech = phrases.attackVsAttack(players[winnerIndex], players[otherIndex(winnerIndex)], winnerIndex)
+                    
+                    //subtracting health from the loser.
                     players[loserIndex].hpSubtract(playerOutputs[winnerIndex])
+                
                 } else {
+                    
+                    //getting the winner.
                     var speech = phrases.attackVsAttack(players[0], players[1], winnerIndex)
-                    if (winnerIndex === 3) players[0].hpSubtract(playerOutputs[1]); players[1].hpSubtract(playerOutputs[0])
-                }
+                    
+                    //in the case of both players damaging each other.
+                    if (winnerIndex === 3) {
+                       
+                        players[0].hpSubtract(playerOutputs[1]) 
+                        players[1].hpSubtract(playerOutputs[0])
+                    }
 
 
             // when one is using physical attacks and the other is using elemental attacks.
             
         
             } else {
+                
                 var attacker = playerArray.indexOf('attack')
-                if (attacker === 0) var otherPlayer = 1; else var otherPlayer = 0;
-
+                
+                var otherPlayer = otherIndex(attacker)
+                
                 console.log('element vs attack')
 
+                
                 //getting the winner index
+                
                 var winnerIndex = chance.weighted([players[otherPlayer].move, 'attack', 2, 3], [55, 35, 15, 15])
+                var loserIndex = otherIndex(winnerIndex)
                 var speech = phrases.attackVsElementSpeech(players[attacker], players[otherPlayer], winnerIndex)
-            }
+                
+                if (winnerIndex < 2) {
+                    players[loserIndex].hpSubtract(playersOutputs[winnerIndex])
+                } else {
+                    //in the case of a draw or both players winning
+
+                    var speech = phrases.attackVsAttack(players[0], players[1], winnerIndex)
+                        
+                    //in the case of both players winning
+                    if (winnerIndex == 3) {
+                        players[0].hpSubtract(playerOutputs[1]) 
+                        players[1].hpSubtract(playerOutputs[0])
+                    
+                    }
+                }
 
 
 
         // one attack and one passive.
         
         } else if (attackTypes.includes(playerArray[0]) || attackTypes.includes(playerArray[1])) {
-            //getting the attacker
+            
+            
+            //getting the attacker 
+            
             if (attackTypes.includes(playerArray[0])) {
                 var attackerIndex = 0
                 var passiveIndex = 1
@@ -164,6 +230,9 @@ module.exports = {
             //if the player dodges
 
             if (playerArray[passiveIndex] === 'dodge') {
+                
+                //getting the probabilities.
+                
                 var winnerIndex = chance.weighted([attackerIndex, passiveIndex], [100 - playerOutputs[passiveIndex], playerOutputs[passiveIndex]])
                 if (winnerIndex === passiveIndex) {
                     //dodge successful
@@ -187,16 +256,22 @@ module.exports = {
 
 
             } else {
-                var winnerIndex = chance.weighted([passiveIndex, attackerIndex], [65, 35])
+                
+                //75% chance of the player blocking some damage, a 25% chance of the player taking the full impace
+                var winnerIndex = chance.weighted([passiveIndex, attackerIndex], [75, 25])
 
                 // subtracting only a specific amount of health, not all of it.
                 if (winnerIndex === passiveIndex) {
-                    players[passiveIndex].hpSubtract(playerOutputs[attackerIndex] * (playerOutputs[passiveIndex] / 100))
+                    
+                    //subtracting the damage from the player
+                    players[passiveIndex].hpSubtract(Math.floor(playerOutputs[attackerIndex] * (playerOutputs[passiveIndex] / 100)))
 
                     // generating speech
                     var speech = phrases.dodgeSpeech(playerNames[attackerIndex], playerNames[passiveIndex], playerArray[attackerIndex], true)
                     players[passiveIndex].ppAdd(Math.floor(Math.random() * 5) + 15)
                 } else {
+                    
+                    //subtracting full damage if the player blocks.
                     players[passiveIndex].hpSubtract(playerOutputs[attackerIndex])
 
                     var speech = phrases.dodgeSpeech(playerNames[attackerIndex], playerNames[passiveIndex], playerArray[attackerIndex], false)
@@ -206,9 +281,7 @@ module.exports = {
 
 
         } else {
-            // nothing will happen in this case
-
-            // (if both players dodge or one player does nothing)
+            // if both players don't attack or one of the players don't select a move.
 
 
 
@@ -217,6 +290,7 @@ module.exports = {
 
 
     },
+        //the function to display the bars which represent health and power.
     bars: function (barEmoji, point) {
         let newBar = '';
         for (let i = 0; i < (point / 20); i++) {
