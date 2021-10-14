@@ -35,10 +35,6 @@ module.exports = {
             }
         }
     },
-    otherIndex: function (i) {
-        if (i === 0) return 1
-        return 0
-    },
     attackName: function (move) {
         if (move === '🔥') {
             return phrases.fire_moves[Math.floor(Math.random() * phrases.fire_moves.length)]
@@ -59,7 +55,11 @@ module.exports = {
         outputRandomiser = function (output) {
             const dice = chance.weighted(['heavy', 'normal'], [10, 90])
             return dice
-        },
+        }
+        otherIndex =  function (i) {
+            if (i === 0) return 1
+            return 0
+        }
             // player objects
             players = [player1, player2]
 
@@ -111,23 +111,35 @@ module.exports = {
                 console.log('element vs element')
                 //getting the winner of the trade off.]
                 var winnerIndex = chance.weighted([elemDom[0], elemDom[1], 2, 3], [(35 * elemDom[2]), 35, 15, 15])
-                if (winnerIndex === 1 || winnerIndex === 0) var speech = phrases.elementVsElement(players[winnerIndex], players[this.otherIndex(winnerIndex)], winnerIndex); else phrases.elementVsElement(player1, player2, winnerIndex)
-            
-
-            // when both players are using physical attacks.
+                if (winnerIndex < 2) {
+                    var loserIndex = other(winnerIndex)
+                    var speech = phrases.elementVsElement(players[winnerIndex], players[loserIndex], winnerIndex)
+                    players[loserIndex].hpSubtract(playerOutputs[winnerIndex])
+                         
+                } else {
+                    var speech = phrases.elementVsElement(player1, player2, winnerIndex)
+                    if(winnerIndex === 3) {
+                        players[0].hpSubtract(playerOutputs[1])
+                        players[1].hpSubtract(playerOutputs[0])
+                    }
+                }
+            // when both players are using physical attacks. c
             
             } else if (playerArray[0] === 'attack' && playerArray[1] === 'attack') {
                 // if both of them use physical attacks
                 var winnerIndex = chance.weighted([0, 1, 2, 3], [40, 40, 10, 10])
-                var loserIndex = this.otherIndex(winnerIndex)
+                var loserIndex = otherIndex(winnerIndex)
                 console.log('attack vs attack')
 
                 if (winnerIndex < 2) {
-                    var speech = phrases.attackVsAttack(players[winnerIndex], players[this.otherIndex(winnerIndex)], winnerIndex)
+                    var speech = phrases.attackVsAttack(players[winnerIndex], players[otherIndex(winnerIndex)], winnerIndex)
                     players[loserIndex].hpSubtract(playerOutputs[winnerIndex])
                 } else {
                     var speech = phrases.attackVsAttack(players[0], players[1], winnerIndex)
-                    if (winnerIndex === 3) players[0].hpSubtract(playerOutputs[1]); players[1].hpSubtract(playerOutputs[0])
+                    if (winnerIndex === 3) {
+                        players[0].hpSubtract(playerOutputs[1])
+                        players[1].hpSubtract(playerOutputs[0])
+                    }
                 }
 
 
@@ -141,8 +153,18 @@ module.exports = {
                 console.log('element vs attack')
 
                 //getting the winner index
-                var winnerIndex = chance.weighted([players[otherPlayer].move, 'attack', 2, 3], [55, 35, 15, 15])
-                var speech = phrases.attackVsElementSpeech(players[attacker], players[otherPlayer], winnerIndex)
+                var winnerIndex = chance.weighted([players[otherPlayer].index, players[attacker].index, 2, 3], [55, 35, 15, 15])
+                if (winnerIndex < 2) {
+                    var speech = phrases.attackVsElementSpeech(players[attacker], players[otherPlayer], winnerIndex)
+                    var loserIndex = otherIndex(winnerIndex)
+                    players[loserIndex].hpSubtract(playerOutputs[winnerIndex])
+                } else {
+                    var speech = phrases.attackVsElementSpeech(players[0], players[1], winnerIndex)
+                    if (winnerIndex === 3) {
+                        players[0].hpSubtract(playerOutputs[1])
+                        players[1].hpSubtract(playerOutputs[0])
+                    }
+                }
             }
 
 

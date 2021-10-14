@@ -58,6 +58,7 @@ module.exports = {
                         return message.channel.send({ content: 'Duel request has been declined.' })
                     }                })
                 responseCollector.on('end', collected => {
+                    if (typeof reponse == 'undefined') response = false
                     if (response === true) return;
                     return message.channel.send('Duel request has timed out.')
                 })
@@ -177,7 +178,7 @@ module.exports = {
                         }
                         newMove(move) {
                             this.move = move
-                            moveCount++
+                            this.moveCount++
                             this.hpDiff = 0
                             this.ppDiff = 0
                         }
@@ -209,7 +210,7 @@ module.exports = {
                         }
                         logStringify(value) {
                             if (value >= 0) return `+${value}`
-                            return `-${value}`
+                            return `${value}`
                         }
                     }
                     var player1 = new Player(message.author.username)
@@ -299,7 +300,7 @@ module.exports = {
 
                                 setTimeout(async () => {
                                     var testEmbed = await new Discord.MessageEmbed() 
-                                        .setTitle(`Round ${moveCount} summary`)
+                                        .setTitle(`Round ${player1.moveCount} summary`)
                                         .addFields(
                                             {
                                                 name:`**${player1.name}**`,
@@ -313,7 +314,7 @@ module.exports = {
                                             }
                                         )
                                     await commentaryMessage.edit({embeds: [testEmbed]})
-                                }, 5000)
+                                }, 10000)
 
                             }, 3000)
                             
