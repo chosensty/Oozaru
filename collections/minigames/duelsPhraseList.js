@@ -195,7 +195,7 @@ module.exports = {
         if (winnerIndex <2) return win[Math.floor(Math.random()*win.length)]; else if (winnerIndex === 2) return draw[Math.floor(Math.random()*draw.length)]
         return both[Math.floor()*Math.random()*both.length]
     },
-    nothingHappens: function(player1, player2) {
+    bothPassive: function(player1, player2) {
         var move1 = this.getMove(player1.move) 
         var name1 = player1.name
 
