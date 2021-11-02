@@ -89,8 +89,8 @@ module.exports = {
         return failedBlockSpeech[Math.floor(Math.random()*failedBlockSpeech.length)]
     },
     attackVsElementSpeech: function(attackingPlayer, elementalPlayer, winner) {
-        var attackName = this.getMove(attackingPlayer.move)
-        var elementName = this.getMove(elementalPlayer.move)
+        var attackName = this.getMove(attackingPlayer.currentMove)
+        var elementName = this.getMove(elementalPlayer.currentMove)
         var attackUser = attackingPlayer.name
         var elementUser = elementalPlayer.name
 
@@ -133,16 +133,16 @@ module.exports = {
 
 
     attackVsAttack: function(winningPlayer, otherPlayer, winnerIndex) {
-        var winMove = this.getMove(winningPlayer.move) 
+        var winMove = this.getMove(winningPlayer.currentMove) 
         var winName = winningPlayer.name
 
-        var otherMove = this.getMove(otherPlayer.move)
+        var otherMove = this.getMove(otherPlayer.currentMove)
         var otherName = otherPlayer.name
 
 
         var win = [
             `${otherName} starts his attack off with a ${otherMove}. ${winName} manages to overpower him using ${winMove}, dealing a good deal of damage.`,
-            `${winMove} confuses his opponent with ${this.confusionMove[Math.floor(Math.random()*this.confusionMove.length)]}. ${otherName} panics and attempts a desperate ${otherMove} however his attack fails to land as ${winName} strikes him using ${winMove}`,
+            `${winName} confuses his opponent with ${this.confusionMove[Math.floor(Math.random()*this.confusionMove.length)]}. ${otherName} panics and attempts a desperate ${otherMove} however his attack fails to land as ${winName} strikes him using ${winMove}`,
             `${winMove} is quickly unleashed by ${winName}, which gets a direct hit on ${otherName} who was preparing to use ${otherMove} but couldn't time it well.`,
             `${otherName} thinks he's found an opening and sends ${otherMove} at his opponent's direction, he pays the price for this as ${winName} manages to land a devastating ${winMove} straight to the face.`,
         ]
@@ -167,10 +167,10 @@ module.exports = {
     },
     elementVsElement: function(winningPlayer, otherPlayer, winnerIndex) { 
         var winName = winningPlayer.name
-        var winMove = this.getMove(winningPlayer.move)
+        var winMove = this.getMove(winningPlayer.currentMove)
 
         var otherName = otherPlayer.name
-        var otherMove = this.getMove(otherPlayer.move)
+        var otherMove = this.getMove(otherPlayer.currentMove)
 
         var win = [
             `${winName} gets the round up and running by unleashing ${winMove}, ${otherName} responds with ${otherMove} but he is overwhelmed and takes a great deal of damage!`,
@@ -196,11 +196,11 @@ module.exports = {
         return both[Math.floor()*Math.random()*both.length]
     },
     nothingHappens: function(player1, player2) {
-        var move1 = this.getMove(player1.move) 
+        var move1 = this.getMove(player1.currentMove) 
         var name1 = player1.name
 
 
-        var move2 = this.getMove(player2.move)
+        var move2 = this.getMove(player2.currentMove)
         var name2 = player2.name
 
 

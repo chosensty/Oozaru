@@ -1,6 +1,6 @@
 const { prefix } = require('../../config.json');
 const Canvas = require('canvas');
-const { elementFun, moveWinner, bars } = require('../../collections/minigames/duelsfuns')
+const { elementFun, moveWinner, bars, duelEnd } = require('../../collections/minigames/duelsfuns')
 const Probability = require('probability-node')
 const Chance = require('chance');
 const { ReactionEmoji, ReactionCollector, MessageButton, MessageActionRow } = require('discord.js');
@@ -26,7 +26,7 @@ module.exports = {
             if (member.id === message.author.id) return message.reply('You can\'t duel your self.')
             // a few validation checks
             if (!member) return message.reply('Please enter a valid user to duel.');
-            
+
             // duel acceptance buttons
             const responseButtons = new MessageActionRow()
                 .addComponents(
@@ -56,9 +56,9 @@ module.exports = {
                         setTimeout(() => resolve(), 2000)
                     } else if (interaction.customId === 'no') {
                         return message.channel.send({ content: 'Duel request has been declined.' })
-                    }                })
+                    }
+                })
                 responseCollector.on('end', collected => {
-                    if (typeof reponse == 'undefined') response = false
                     if (response === true) return;
                     return message.channel.send('Duel request has timed out.')
                 })
@@ -150,13 +150,29 @@ module.exports = {
                             drawButton
                         )
 
+
+                    // a function to disable or enable all of the buttons.
                     const buttonDisable = function (status) {
                         buttonMoveRow.components.forEach((buttons) => buttons.disabled = status)
-                        buttonForfeitRow.components.forEach((buttons) => buttons.disabled = status)      
+                        buttonForfeitRow.components.forEach((buttons) => buttons.disabled = status)
+                    }
+
+                    //information on the player which will be on the embed.
+                    const playerInfo = function (player) {
+                        return `**Health: ${player.hp}\n${bars(healthbar, player.hp)}\nPower: ${player.pp}\n${bars(powerbar, player.pp)}\nElemental power: ${player.element}**`
                     }
 
 
+                    //information on the player used on the round log.
+                    const playerLogInfo = function (player, roundWinner) {
+                        return `**Selected move: ${player.currentMove}\nCurrent Health: ${player.hp} [${player.logStringify(player.hpDiff[player.moveCount])}]\nCurrent power: ${player.pp} [${player.logStringify(player.ppDiff[player.moveCount])}]\n Round Winner: ${roundWinner}**`
+                    }
 
+                    gameInfoObject = {
+                        
+                    }
+
+                    // settings the class for the players.
                     class Player {
                         constructor(name) {
                             this.name = name
@@ -167,68 +183,90 @@ module.exports = {
                         element = Elements[Math.floor(Math.random() * 5)]
                         Elements = ['🔥', '💨', '⚡', '⛰️', '🌊']
                         moveCount = 0
-                        move = 'nothing'
-                        hpDiff = 0
-                        ppDiff = 0
+                        currentMove = 'nothing'
+                        move = []
+                        hpDiff = []
+                        ppDiff = []
                         reInitElement() {
-                            this.element = this.Element[Math.floor(Math.random()*this.Elements.length)]
+                            this.element = this.Element[Math.floor(Math.random() * this.Elements.length)]
                         }
                         selectElement(element) {
                             this.element = element
                         }
                         newMove(move) {
-                            this.move = move
                             this.moveCount++
-                            this.hpDiff = 0
-                            this.ppDiff = 0
+                            this.move[this.moveCount] = move
+                            this.hpDiff[this.moveCount] = 0
+                            this.ppDiff[this.moveCount] = 0
+                            this.currentMove = move
                         }
                         hpSubtract(subtractValue) {
+                            // storing the intial hp.
+                            this.initHp = this.hp
                             this.hp -= subtractValue
                             if (this.pp <= 0) this.pp = 0
-                            this.hpDiff -= subtractValue
-                            this.hpLost = subtractValue
+                            this.hpDiff[this.moveCount] = this.hp - this.initHp
+                            this.hpLost[this.moveCount] = this.initHp - this.hp
                         }
                         ppSubtract(subtractValue) {
+                            //storing the initial power points.
+                            this.initPp = this.pp
                             this.pp -= subtractValue
                             if (this.pp <= 0) this.pp === 0
-                            this.ppDiff -= subtractValue
-                            this.ppLost = subtractValue
+                            this.ppDiff[this.moveCount] = this.pp - this.initPp
+                            this.ppLost[this.moveCount] = this.initpp - this.pp
                         }
                         hpAdd(addValue) {
+
+                            this.initHp = this.hp
                             this.hp += addValue
                             if (this.hp >= 100) this.hp = 100
-                            this.hpDiff += addValue
-                            this.hpGained = addValue
+                            this.hpDiff[this.moveCount] = this.hp - this.initHp
+                            this.hpGained[this.moveCount] = this.hp - ithis.nitHp
                         }
 
                         ppAdd(addValue) {
+
+                            this.initPp = this.pp
                             this.pp += addValue
                             if (this.pp >= 100) this.pp = 100
-                            this.ppDiff += addValue
-                            this.ppGained = addValue
+
+                            this.ppDiff[this.moveCount] = this.pp - this.initPp
+                            this.ppGained[this.moveCount] = this.pp - this.initPp
 
                         }
                         logStringify(value) {
                             if (value >= 0) return `+${value}`
                             return `${value}`
                         }
+                        reset() {
+                            this.currentMove = 'nothing'
+
+                        }
                     }
+
+                    //setting the two instances for the class.
                     var player1 = new Player(message.author.username)
                     playerCount++
                     var player2 = new Player(member.displayName)
 
+
+
+                    //adding an array containing all the buttons to control them all simultaneously.
                     const allButtons = [attackButton, dodgeButton, guardButton, elementButton, forfeitButton, drawButton]
+
+                    //the embed signifying the start of the duel.
                     let embed = new Discord.MessageEmbed()
                         .setTitle(`A duel between ${message.author.username} and ${member.displayName} has begun!`)
                         .addFields(
                             {
                                 name: `${player1.name}`,
-                                value: `**Health: ${player1.hp}\n${bars(healthbar, player1.hp)}\nPower: ${player1.pp}\n${bars(powerbar, player1.pp)}\nElemental power: ${player1.element}**`
+                                value: playerInfo(player1)
                                 , inline: true
                             },
                             {
                                 name: `${player2.name}`,
-                                value: `**Health: ${player2.hp}\n${bars(healthbar, player2.hp)}\nPower: ${player2.pp}\n${bars(powerbar, player2.pp)}\nElemental power: ${player2.element}**`
+                                value: playerInfo(player2)
                                 , inline: true
                             }
                         )
@@ -238,90 +276,146 @@ module.exports = {
                     var duelEmbed = await message.channel.send({ embeds: [embed], files: [attachment], components: [buttonMoveRow, buttonForfeitRow] });
                     const moveFilter = i => i.user.id === member.id || i.user.id === message.author.id
                     const moveCollector = duelEmbed.createMessageComponentCollector({ moveFilter, time: 30000 })
-                    let commentaryMessage
+                    let commentaryMessage, duelEnd
 
-                    //moves button collector.
-                    new Promise(async (resolve, reject) => {
-                        moveCollector.on('collect', async interaction => {
-                            console.log(player1.move)
-                            console.log(player2.move)
-                            if (interaction.user.id === message.author.id) {
-                                if (interaction.customId === 'forfeit') return message.channel.send(`**${player1.name} has forfeited the match.**`)
-                                if (player1.move === 'nothing') {
-                                    player1.newMove(interaction.customId)
-                                    if (player2.move === 'nothing') {
-                                        commentaryMessage = await message.channel.send({ content: `**${message.author.username} has selected his move! waiting on ${member.displayName}...**` })
-                                    } else {
-                                        commentaryMessage.edit({ content: `**${message.author.username} has now selected his move!**` })
-                                        moveCollector.stop()
+                    let duelStatus = true
+
+                    //making it repeat until one of the players has lost.
+                    while (duelStatus === true) {
+                        //using promises so that parts of the code only executed in the correct order.
+                        new Promise(async (resolve, reject) => {
+
+                            //getting the two players moves.
+                            moveCollector.on('collect', async interaction => {
+                                console.log(player1.currentMove)
+                                console.log(player2.currentMove)
+                                if (interaction.user.id === message.author.id) {
+                                    if (interaction.customId === 'forfeit') return message.channel.send(`**${player1.name} has forfeited the match.**`)
+                                    if (player1.currentMove === 'nothing') {
+                                        player1.newMove(interaction.customId)
+                                        if (player2.currentMove === 'nothing') {
+                                            commentaryMessage = await message.channel.send({ content: `**${message.author.username} has selected his move! waiting on ${member.displayName}...**` })
+                                        } else {
+                                            commentaryMessage.edit({ content: `**${message.author.username} has now selected his move!**` })
+                                            moveCollector.stop()
+                                        }
                                     }
-                                }
-                            } else {
-                                if (interaction.customId === 'forfeit') return message.channel.send(`**${player2.name} has forfeited the match.**`)
-                                if (player2.move === 'nothing') {
-                                    player2.newMove(interaction.customId)
-                                    if (player1.move === 'nothing') {
-                                        commentaryMessage = await message.channel.send({ content: `**${member.displayName} has now selected his move! waiting on ${message.author.username}...**` })
-                                    } else {
-                                        commentaryMessage.edit({ content: `**${member.displayName} has now also selected his move!**` })
-                                        moveCollector.stop()
-                                    }
-                                }
-                            }
-                            interaction.deferUpdate();
-
-                        })
-                        
-                        moveCollector.on('end', interaction => {
-                            buttonDisable(true)
-
-                            duelEmbed.edit({ embeds: [embed], files: [attachment], components: [buttonMoveRow, buttonForfeitRow] });
-
-                            setTimeout(() => {
-                                if (typeof commentaryMessage !== 'undefined') {
-                                    commentaryMessage.edit({ content: `**simulating outcome...**` })
                                 } else {
-                                    response = true;
-                                    return message.channel.send({ content: `**Duel ended due to inactivity.**` })
+                                    if (interaction.customId === 'forfeit') return message.channel.send(`**${player2.name} has forfeited the match.**`)
+                                    if (player2.currentMove === 'nothing') {
+                                        player2.newMove(interaction.customId)
+                                        if (player1.currentMove === 'nothing') {
+                                            commentaryMessage = await message.channel.send({ content: `**${member.displayName} has now selected his move! waiting on ${message.author.username}...**` })
+                                        } else {
+                                            commentaryMessage.edit({ content: `**${member.displayName} has now also selected his move!**` })
+                                            moveCollector.stop()
+                                        }
+                                    }
                                 }
-                                resolve()
-                            }, 2000)
-                        })
-                    })
-                        .then(async() => {
-                            const moveSimulation = await moveWinner(player1, player2)
-                            await setTimeout(async () => {
-                                if (!moveSimulation) return message.channel.send('**Duel error ocurred. Sorry for the inconvenience.**');
-                                var moveSpeech = await `**${moveSimulation[1]}**`
-                                commentaryMessage.edit({content: moveSpeech})
-                                console.log(moveSimulation[0])
-                                player1 = moveSimulation[0][0]
-                                player2 = moveSimulation[0][1]
+                                interaction.deferUpdate();
 
+                            })
+                            //once both players have selected their moves.
+                            moveCollector.on('end', interaction => {
+                                buttonDisable(true)
+
+                                //if no move is selected
+                                if (player1.currentMove === 'nothing') {
+                                    player1.newMove('nothing')
+                                }
+                                if (player2.currentMove === 'nothing') {
+                                    player2.newMove('nothing')
+                                }
+
+
+                                duelEmbed.edit({ embeds: [embed], files: [attachment], components: [buttonMoveRow, buttonForfeitRow] });
+
+                                setTimeout(() => {
+                                    if (typeof commentaryMessage !== 'undefined') {
+                                        commentaryMessage.edit({ content: `**simulating outcome...**` })
+                                    } else {
+                                        response = true;
+                                        return message.channel.send({ content: `**Duel ended due to inactivity.**` })
+                                    }
+                                    resolve()
+                                }, 2000)
+                            })
+                        })
+                            .then(() => {
+
+                                //once the both players have selected their move, the move simulation function is activated
+                                const moveSimulation = moveWinner(player1, player2)
                                 setTimeout(async () => {
-                                    var testEmbed = await new Discord.MessageEmbed() 
-                                        .setTitle(`Round ${player1.moveCount} summary`)
-                                        .addFields(
-                                            {
-                                                name:`**${player1.name}**`,
-                                                value:`**Selected move: ${player1.move}\nCurrent Health: ${player1.hp} [${player1.logStringify(player1.hpDiff)}]\nCurrent power: ${player1.pp} [${player1.logStringify(player1.ppDiff)}]\n Round Winner: ${moveSimulation[2]}**`,
-                                                inline:true
-                                            },
-                                            {
-                                                name:`**${player2.name}**`,
-                                                value:`**Selected move: ${player2.move}\nCurrent Health: ${player2.hp} [${player2.logStringify(player2.hpDiff)}]\nCurrent power: ${player2.pp} [${player2.logStringify(player2.ppDiff)}]\n Round Winner: ${moveSimulation[2]}**`,
-                                                inline:true
-                                            }
-                                        )
-                                    await commentaryMessage.edit({embeds: [testEmbed]})
-                                }, 10000)
 
-                            }, 3000)
-                            
-                        })
 
+                                    //just a quick validation check
+                                    if (!moveSimulation) return message.channel.send('**Duel error ocurred. Sorry for the inconvenience.**');
+
+
+                                    //sending the speech of the move to the discord server.
+                                    var moveSpeech = await `**${moveSimulation[1]}**`
+                                    commentaryMessage.edit({ content: moveSpeech })
+
+
+                                    console.log(moveSimulation[0])
+
+
+                                    //re-initialising the player objects
+                                    player1 = moveSimulation[0][0]
+                                    player2 = moveSimulation[0][1]
+
+
+
+
+
+                                    //sending the commentary message to discord, then a few seconds after sending the log for that duel round.
+                                    setTimeout(async () => {
+
+                                        //checking if there is a winner.
+                                        if (player1.hp === 0 || player2.hp === 0) {
+                                            duelEnd = duelEnd()
+                                            duelStatus = false
+                                            break;
+                                        }
+
+
+                                        var testEmbed = await new Discord.MessageEmbed()
+                                            .setTitle(`Round ${moveCount} summary`)
+                                            .addFields(
+                                                {
+                                                    name: `**${player1.name}**`,
+                                                    value: playerLogInfo(player1, moveSimulation[2]),
+                                                    inline: true
+                                                },
+                                                {
+                                                    name: `**${player2.name}**`,
+                                                    value: playerLogInfo(player2, moveSimulation[2]),
+                                                    inline: true
+                                                }
+                                            )
+                                        await commentaryMessage.edit({ embeds: [testEmbed] })
+
+
+                                        //starting the next round or ending the duel if it's finished.
+                                        setTimeout(async () => {
+                                            player1.reset()
+                                            player2.reset()
+                                            await commentaryMessage.edit({ embeds: [], content: `**Starting a new round...**` })
+                                        }, 7000)
+                                    }, 10000)
+
+                                }, 2000)
+
+
+
+                            })
+                    }
+                    //after the duel ends / when the while loop is exited.
+                    const endEmbed = new Discord.MessageEmbed()
+                        .setTitle('Duel has ended')
 
                 })
+
 
         } catch (err) {
             console.error(`duels error: ${err}`)

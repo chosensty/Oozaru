@@ -5,6 +5,7 @@ const { lightning_moves } = require('./duelsPhraseList')
 const chance = new Chance
 const phrases = require('./duelsPhraseList')
 module.exports = {
+    /*
     elementFun: function (e1, e2) {
         function indexCheck(index) {
             if (index <= -1) {
@@ -64,12 +65,12 @@ module.exports = {
             players = [player1, player2]
 
         // an array of all players
-        const playerArray = [player1.move, player2.move]
+        const playerArray = [player1.currentMove, player2.currentMove]
 
         //all different outcomes
-        const outComes = [player1.move, player2.move, 'neither', 'both', 'nothing']
+        const outComes = [player1.currentMove, player2.currentMove, 'neither', 'both', 'nothing']
 
-        const playerNames = [player1.name, player2.name]
+        const playerNames = [player1.name, player2.name, 'neither', 'both']
 
         const outputType = []
 
@@ -251,8 +252,17 @@ module.exports = {
         }
         return newBar
     },
-    duelEnd: function () {
+    duelEnd: function (reason, winner) {
+        // giving the different values for different reasons of victory.
+        
+        if (reason === 'victory') {
 
+        } else if (reason === 'draw') {
+
+        } else if (reason === 'forfeit') {
+
+        } else if (reason === 'draw')
+        return;
     }
 
 
@@ -260,3 +270,4 @@ module.exports = {
 
 
 }
+*/
