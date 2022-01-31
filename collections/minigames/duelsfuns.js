@@ -5,7 +5,6 @@ const { lightning_moves } = require('./duelsPhraseList')
 const chance = new Chance
 const phrases = require('./duelsPhraseList')
 module.exports = {
-    /*
     elementFun: function (e1, e2) {
         function indexCheck(index) {
             if (index <= -1) {
@@ -263,11 +262,83 @@ module.exports = {
 
         } else if (reason === 'draw')
         return;
+    },
+    // settings the class for the players.
+    Player: class {
+        constructor(name, index) {
+            this.name = name
+            this.index = index
+        }
+        hp = 100
+        pp = 100
+        element = Elements[Math.floor(Math.random() * 5)]
+        Elements = ['🔥', '💨', '⚡', '⛰️', '🌊']
+        moveCount = 0
+        currentMove = 'nothing'
+        move = []
+        hpDiff = []
+        ppDiff = []
+        reInitElement() {
+            this.element = this.Element[Math.floor(Math.random() * this.Elements.length)]
+        }
+        selectElement(element) {
+            this.element = element
+        }
+        newMove(move) {
+            this.moveCount++
+            this.move[this.moveCount] = move
+            this.hpDiff[this.moveCount] = 0
+            this.ppDiff[this.moveCount] = 0
+            this.currentMove = move
+        }
+        hpSubtract(subtractValue) {
+            // storing the intial hp.
+            this.initHp = this.hp
+            this.hp -= subtractValue
+            if (this.pp <= 0) this.pp = 0
+            this.hpDiff[this.moveCount] = this.hp - this.initHp
+            this.hpLost[this.moveCount] = this.initHp - this.hp
+        }
+        ppSubtract(subtractValue) {
+            //storing the initial power points.
+            this.initPp = this.pp
+            this.pp -= subtractValue
+            if (this.pp <= 0) this.pp === 0
+            this.ppDiff[this.moveCount] = this.pp - this.initPp
+            this.ppLost[this.moveCount] = this.initpp - this.pp
+        }
+        hpAdd(addValue) {
+
+            this.initHp = this.hp
+            this.hp += addValue
+            if (this.hp >= 100) this.hp = 100
+            this.hpDiff[this.moveCount] = this.hp - this.initHp
+            this.hpGained[this.moveCount] = this.hp - ithis.nitHp
+        }
+
+        ppAdd(addValue) {
+
+            this.initPp = this.pp
+            this.pp += addValue
+            if (this.pp >= 100) this.pp = 100
+
+            this.ppDiff[this.moveCount] = this.pp - this.initPp
+            this.ppGained[this.moveCount] = this.pp - this.initPp
+
+        }
+        logStringify(value) {
+            if (value >= 0) return `+${value}`
+            return `${value}`
+        }
+        reset() {
+            this.currentMove = 'nothing'
+
+        }
     }
 
 
 
 
 
+
 }
-*/

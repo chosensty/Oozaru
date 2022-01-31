@@ -1,5 +1,4 @@
 const fs = require('fs');
-const pagination = require('discord.js-pagination');
 const { prefix } = require('../../config.json')
 const { pageEmbeds } = require('../../collections/embeds')
 module.exports = {
