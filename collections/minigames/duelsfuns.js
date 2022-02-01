@@ -52,6 +52,7 @@ module.exports = {
     },
 
     moveWinner: function (player1, player2) {
+        return new Promise((resolve, reject) {
         outputRandomiser = function (output) {
             const dice = chance.weighted(['heavy', 'normal'], [10, 90])
             return dice
@@ -232,12 +233,12 @@ module.exports = {
 
             // (if both players dodge or one player does nothing)
 
-
+            var speech = phrases.nothingHappens()
 
         }
-        return [players, speech, playerNames[winnerIndex]]
+        resolve([players, speech, playerNames[winnerIndex]])
 
-
+    })
     },
     bars: function (barEmoji, point) {
         let newBar = '';
