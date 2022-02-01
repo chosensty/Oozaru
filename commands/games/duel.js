@@ -147,6 +147,8 @@ module.exports = {
 
                 buttonDisable(false)
 
+
+                //re-updating embed fields.
                 embed.fields[0] = {
                     name: `${player1.name}`,
                     value: playerInfo(player1)
@@ -196,8 +198,6 @@ module.exports = {
                     player1 = moveSimulation[0][0]
                     player2 = moveSimulation[0][1]
                     winnerName = moveSimulation[2]
-
-
 
 
                     //sending the commentary message to discord, then a few seconds after sending the log for that duel round.

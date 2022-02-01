@@ -1,6 +1,0 @@
-{
-    "prefix": "O-",
-    "token": "ODUyNjg0NTgwMDY1Mzc4MzI1.YMKaZg.7khlCyMHhHfNPv28r03vI7oaEck",
-    "redisPath":"//redis-10674.c242.eu-west-1-2.ec2.cloud.redislabs.com:10674?password=kUgxsw9f6yhmNnMg7fuaRjsnwk4WULzJ",
-    "mongoPath": "mongodb://localhost:27017"
-}
