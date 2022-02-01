@@ -31,8 +31,8 @@ module.exports = {
                 if(!response) return
 
                 //setting the two instances for the class.
-                var player1 = new Player(message.author.username, 0)
-                var player2 = new Player(member.displayName, 1)
+                var player1 = new Player(message.author.username, 0, message)
+                var player2 = new Player(member.displayName, 1, member)
 
                 //making the image
                 const attachment = await duelImage(message, member)
@@ -109,7 +109,7 @@ module.exports = {
 
                 //information on the player used on the round log.
                 const playerLogInfo = function (player, roundWinner) {
-                    return `**Selected move: ${player.currentMove}\nCurrent Health: ${player.hp} [${player.logStringify(player.hpDiff[player.moveCount])}]\nCurrent power: ${player.pp} [${player.logStringify(player.ppDiff[player.moveCount])}]\n Round Winner: ${roundWinner}**`
+                    return `**Selected move: ${player.currentMove}\nCurrent Health: ${player.hp} [${player.logStringify(player.hpDiff[player.moveCount-1])}]\nCurrent power: ${player.pp} [${player.logStringify(player.ppDiff[player.moveCount-1])}]\n Round Winner: ${roundWinner}**`
                 }
 
 
@@ -132,24 +132,43 @@ module.exports = {
                         }
                     )
                     .setImage('attachment://duel.png')
-                    .setFooter('You have 30 seconds to make a move! remember once you\'ve selected a move there\'s no going back...')
                 // sending a message and storing it in a variable for reactions.
                 var duelEmbed = await message.channel.send({ embeds: [embed], files: [attachment], components: [buttonMoveRow, buttonForfeitRow] });
-                const moveFilter = i => i.user.id === member.id || i.user.id === message.author.id
-                const moveCollector = duelEmbed.createMessageComponentCollector({ moveFilter, time: 30000 })
                 let commentaryMessage, duelEnd
 
+                
                 game_function = async function () {
-
+                if(player1.moveCount >= 1) commentaryMessage.delete() 
 
                 //using promises so that parts of the code only executed in the correct order.
 
                 //getting both of the players moves.
+
+
                 buttonDisable(false)
 
-                let get_moves = await collect_moves(message, moveCollector, commentaryMessage, player1, player2)
+                embed.fields[0] = {
+                    name: `${player1.name}`,
+                    value: playerInfo(player1)
+                    , inline: true
+                }
+                embed.fields[1] = {
+                    name: `${player2.name}`,
+                    value: playerInfo(player2)
+                    , inline: true
+                }
 
 
+                duelEmbed.edit({ embeds: [embed], files: [attachment], components: [buttonMoveRow, buttonForfeitRow] })
+
+
+                let get_moves = await collect_moves(duelEmbed, player1, player2)
+                
+
+
+                player1.newMove(get_moves[0])
+                player2.newMove(get_moves[1])
+                    
 
                 buttonDisable(true)
                 
@@ -169,16 +188,14 @@ module.exports = {
 
                     //sending the speech of the move to the discord server.
                     var moveSpeech = await `**${moveSimulation[1]}**`
-                    commentaryMessage.edit({ content: moveSpeech })
+                    commentaryMessage = await message.channel.send({ content: moveSpeech })
 
-
-                    console.log(moveSimulation[0])
 
 
                     //re-initialising the player objects
                     player1 = moveSimulation[0][0]
                     player2 = moveSimulation[0][1]
-
+                    winnerName = moveSimulation[2]
 
 
 
@@ -194,16 +211,16 @@ module.exports = {
 
 
                         var testEmbed = await new Discord.MessageEmbed()
-                            .setTitle(`Round ${moveCount} summary`)
+                            .setTitle(`Round ${player1.moveCount} summary`)
                             .addFields(
                                 {
                                     name: `**${player1.name}**`,
-                                    value: playerLogInfo(player1, moveSimulation[2]),
+                                    value: playerLogInfo(player1, winnerName),
                                     inline: true
                                 },
                                 {
                                     name: `**${player2.name}**`,
-                                    value: playerLogInfo(player2, moveSimulation[2]),
+                                    value: playerLogInfo(player2, winnerName),
                                     inline: true
                                 }
                             )
@@ -215,7 +232,7 @@ module.exports = {
                             player1.reset()
                             player2.reset()
                             await commentaryMessage.edit({ embeds: [], content: `**Starting a new round...**` })
-                            game_function()
+                            setTimeout(() => game_function(), 1000)
                         }, 7000)
                     }, 10000)
 
@@ -223,6 +240,7 @@ module.exports = {
 
 
         }
+        game_function()
 
                      
 

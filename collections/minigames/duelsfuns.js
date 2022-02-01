@@ -52,7 +52,7 @@ module.exports = {
     },
 
     moveWinner: function (player1, player2) {
-        return new Promise((resolve, reject) {
+        return new Promise((resolve, reject) => {
         outputRandomiser = function (output) {
             const dice = chance.weighted(['heavy', 'normal'], [10, 90])
             return dice
@@ -96,7 +96,6 @@ module.exports = {
         const attackTypes = ['attack', '🔥', '💨', '⚡', '⛰️', '🌊']
 
         const passiveTypes = ['guard', 'dodge']
-        console.log(playerArray)
 
 
         //when both players are attacking.
@@ -266,9 +265,10 @@ module.exports = {
     },
     // settings the class for the players.
     Player: class {
-        constructor(name, index) {
+        constructor(name, index, info) {
             this.name = name
             this.index = index
+            this.player_info = info
         }
         hp = 100
         pp = 100
@@ -287,9 +287,9 @@ module.exports = {
         }
         newMove(move) {
             this.moveCount++
-            this.move[this.moveCount] = move
-            this.hpDiff[this.moveCount] = 0
-            this.ppDiff[this.moveCount] = 0
+            this.move.push(move)
+            this.hpDiff.push(0)
+            this.ppDiff.push(0)
             this.currentMove = move
         }
         hpSubtract(subtractValue) {
@@ -297,24 +297,21 @@ module.exports = {
             this.initHp = this.hp
             this.hp -= subtractValue
             if (this.pp <= 0) this.pp = 0
-            this.hpDiff[this.moveCount] = this.hp - this.initHp
-            this.hpLost[this.moveCount] = this.initHp - this.hp
+            this.hpDiff[this.moveCount-1] = this.hp - this.initHp
         }
         ppSubtract(subtractValue) {
             //storing the initial power points.
             this.initPp = this.pp
             this.pp -= subtractValue
             if (this.pp <= 0) this.pp === 0
-            this.ppDiff[this.moveCount] = this.pp - this.initPp
-            this.ppLost[this.moveCount] = this.initpp - this.pp
+            this.ppDiff[this.moveCount-1] = this.pp - this.initPp
         }
         hpAdd(addValue) {
 
             this.initHp = this.hp
             this.hp += addValue
             if (this.hp >= 100) this.hp = 100
-            this.hpDiff[this.moveCount] = this.hp - this.initHp
-            this.hpGained[this.moveCount] = this.hp - ithis.nitHp
+            this.hpDiff[this.moveCount-1] = this.hp - this.initHp
         }
 
         ppAdd(addValue) {
@@ -323,8 +320,7 @@ module.exports = {
             this.pp += addValue
             if (this.pp >= 100) this.pp = 100
 
-            this.ppDiff[this.moveCount] = this.pp - this.initPp
-            this.ppGained[this.moveCount] = this.pp - this.initPp
+            this.ppDiff[this.moveCount-1] = this.pp - this.initPp
 
         }
         logStringify(value) {
@@ -333,7 +329,6 @@ module.exports = {
         }
         reset() {
             this.currentMove = 'nothing'
-
         }
     }
 
