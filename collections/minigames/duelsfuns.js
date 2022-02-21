@@ -53,16 +53,12 @@ module.exports = {
 
     moveWinner: function (player1, player2) {
         return new Promise((resolve, reject) => {
-        outputRandomiser = function (output) {
-            const dice = chance.weighted(['heavy', 'normal'], [10, 90])
-            return dice
-        }
         otherIndex =  function (i) {
             if (i === 0) return 1
             return 0
         }
             // player objects
-            players = [player1, player2]
+            const players = [player1, player2]
 
         // an array of all players
         const playerArray = [player1.currentMove, player2.currentMove]
@@ -77,9 +73,11 @@ module.exports = {
         const randomHitType = []
         //statistical outputs
         const playerOutputs = playerArray.map((player, index) => {
-            outputType[index] = outputRandomiser(player)
-            if (outputType[index] === 'normal') var multiplier = 1; randomHitType[index] = phrases.hits[Math.floor(Math.random() * phrases.hits.length)]
-            if (outputType[index] === 'heavy') var multiplier = 1.5; randomHitType[index] = phrases.hard_hit[Math.floor(Math.random() * phrases.hard_hit.length)]
+            outputType[index] = chance.weighted(['heavy', 'normal'], [10, 90])
+            console.log(Elements)
+            console.log(player)
+            if (outputType[index] === 'normal') multiplier = 1; randomHitType[index] = phrases.hits[Math.floor(Math.random() * phrases.hits.length)]
+            if (outputType[index] === 'heavy') multiplier = 1.5; randomHitType[index] = phrases.hard_hit[Math.floor(Math.random() * phrases.hard_hit.length)]
             if (player === 'attack') {
                 return (Math.floor(Math.random() * 6) + 10) * multiplier
             } else if (player === 'guard') {
@@ -99,6 +97,8 @@ module.exports = {
 
 
         //when both players are attacking.
+
+        console.log(playerArray)
     
         if (attackTypes.includes(playerArray[0]) && attackTypes.includes(playerArray[1])) {
 
@@ -147,16 +147,16 @@ module.exports = {
             
         
             } else {
-                var attacker = playerArray.indexOf('attack')
-                if (attacker === 0) var otherPlayer = 1; else var otherPlayer = 0;
+                let attacker = playerArray.indexOf('attack')
+                let otherPlayer = otherIndex(attacker)
 
                 console.log('element vs attack')
 
                 //getting the winner index
-                var winnerIndex = chance.weighted([players[otherPlayer].index, players[attacker].index, 2, 3], [55, 35, 15, 15])
+                let winnerIndex = chance.weighted([players[otherPlayer].index, players[attacker].index, 2, 3], [55, 35, 15, 15])
                 if (winnerIndex < 2) {
                     var speech = phrases.attackVsElementSpeech(players[attacker], players[otherPlayer], winnerIndex)
-                    var loserIndex = otherIndex(winnerIndex)
+                    let loserIndex = otherIndex(winnerIndex)
                     players[loserIndex].hpSubtract(playerOutputs[winnerIndex])
                 } else {
                     var speech = phrases.attackVsElementSpeech(players[0], players[1], winnerIndex)
@@ -173,6 +173,7 @@ module.exports = {
         
         } else if (attackTypes.includes(playerArray[0]) || attackTypes.includes(playerArray[1])) {
             //getting the attacker
+
             if (attackTypes.includes(playerArray[0])) {
                 var attackerIndex = 0
                 var passiveIndex = 1
@@ -186,6 +187,7 @@ module.exports = {
             //if the player dodges
 
             if (playerArray[passiveIndex] === 'dodge') {
+                console.log('dodge vs attack')
                 var winnerIndex = chance.weighted([attackerIndex, passiveIndex], [100 - playerOutputs[passiveIndex], playerOutputs[passiveIndex]])
                 if (winnerIndex === passiveIndex) {
                     //dodge successful
@@ -209,6 +211,7 @@ module.exports = {
 
 
             } else {
+                console.log('block vs attack')
                 var winnerIndex = chance.weighted([passiveIndex, attackerIndex], [65, 35])
 
                 // subtracting only a specific amount of health, not all of it.
@@ -232,7 +235,8 @@ module.exports = {
 
             // (if both players dodge or one player does nothing)
 
-            var speech = phrases.nothingHappens()
+            var speech = phrases.nothingHappens(playerNames[0], playerNames[1])
+            winnerIndex = 2
 
         }
         resolve([players, speech, playerNames[winnerIndex]])
@@ -241,7 +245,7 @@ module.exports = {
     },
     bars: function (barEmoji, point) {
         let newBar = '';
-        for (let i = 0; i < (point / 20); i++) {
+        for (let i = 0; i < parseInt(point / 20); i++) {
             newBar += barEmoji
         }
         if (newBar.length < 5) {
@@ -249,6 +253,7 @@ module.exports = {
                 newBar += '🟥'
             }
         }
+        console.log(newBar)
         return newBar
     },
     duelEnd: function (reason, winner) {
@@ -272,8 +277,8 @@ module.exports = {
         }
         hp = 100
         pp = 100
-        element = Elements[Math.floor(Math.random() * 5)]
         Elements = ['🔥', '💨', '⚡', '⛰️', '🌊']
+        element = this.Elements[Math.floor(Math.random() * 5)]
         moveCount = 0
         currentMove = 'nothing'
         move = []
@@ -287,40 +292,37 @@ module.exports = {
         }
         newMove(move) {
             this.moveCount++
-            this.move.push(move)
+            if (move === 'element') this.currentMove = this.element; else this.currentMove = move
             this.hpDiff.push(0)
             this.ppDiff.push(0)
-            this.currentMove = move
+            this.move.push(this.currentMove)
         }
         hpSubtract(subtractValue) {
             // storing the intial hp.
-            this.initHp = this.hp
+            console.log('hp mins '+subtractValue)
+            this.hpDiff[this.moveCount-1] = 0 - subtractValue
             this.hp -= subtractValue
-            if (this.pp <= 0) this.pp = 0
-            this.hpDiff[this.moveCount-1] = this.hp - this.initHp
+            if (this.hp <= 0) this.hp = 0
         }
         ppSubtract(subtractValue) {
             //storing the initial power points.
-            this.initPp = this.pp
+            this.ppDiff[this.moveCount-1] = 0 - subtractValue
             this.pp -= subtractValue
             if (this.pp <= 0) this.pp === 0
-            this.ppDiff[this.moveCount-1] = this.pp - this.initPp
         }
         hpAdd(addValue) {
 
-            this.initHp = this.hp
+            this.hpDiff[this.moveCount-1] = addValue
             this.hp += addValue
             if (this.hp >= 100) this.hp = 100
-            this.hpDiff[this.moveCount-1] = this.hp - this.initHp
         }
 
         ppAdd(addValue) {
-
-            this.initPp = this.pp
+            this.ppDiff[this.moveCount-1] = addValue
             this.pp += addValue
             if (this.pp >= 100) this.pp = 100
 
-            this.ppDiff[this.moveCount-1] = this.pp - this.initPp
+            
 
         }
         logStringify(value) {

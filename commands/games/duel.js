@@ -3,7 +3,7 @@ const { Player, moveWinner, bars } = require('../../collections/minigames/duelsf
 const { MessageButton, MessageActionRow } = require('discord.js');
 const { request } = require('../../collections/requestcheck')
 const { duelImage } = require('../../collections/minigames/duelsimage.js')
-const { collect_moves } = require('../../collections/minigames/collectmoves.js')
+const { collect_moves_duels } = require('../../collections/minigames/collectmoves.js')
 module.exports = {
     name: 'duel',
     description: 'duel another player',
@@ -13,6 +13,7 @@ module.exports = {
     cooldown: 10,
     async execute(client, message, args, Discord) {
         try {
+            // return message.channel.send('still under maintenance.')
             // if there are no arguments given
             if (!args.length) return message.reply(`Please enter a user that you'd like to duel.`);
             if (args[0] === 'guide') {
@@ -27,7 +28,7 @@ module.exports = {
 
             
             // duel request function here
-                const response = await request(message, member)
+                const response = await request(message, member, 'duel')
                 if(!response) return
 
                 //setting the two instances for the class.
@@ -134,50 +135,37 @@ module.exports = {
                     .setImage('attachment://duel.png')
                 // sending a message and storing it in a variable for reactions.
                 var duelEmbed = await message.channel.send({ embeds: [embed], files: [attachment], components: [buttonMoveRow, buttonForfeitRow] });
-                let commentaryMessage, duelEnd
-
                 
                 game_function = async function () {
-                if(player1.moveCount >= 1) commentaryMessage.delete() 
+                if(player1.moveCount >= 1) {
+                    commentaryMessage.delete()
+                    embed.fields[0] = {
+                        name: `${player1.name}`,
+                        value: playerInfo(player1)
+                        , inline: true
+                    }
+                    embed.fields[1] = {
+                        name: `${player2.name}`,
+                        value: playerInfo(player2)
+                        , inline: true
+                    }
+                    duelEmbed.edit({ embeds: [embed], files: [attachment], components: [buttonMoveRow, buttonForfeitRow] })
+                } 
 
                 //using promises so that parts of the code only executed in the correct order.
 
                 //getting both of the players moves.
 
-
-                buttonDisable(false)
-
-
-                //re-updating embed fields.
-                embed.fields[0] = {
-                    name: `${player1.name}`,
-                    value: playerInfo(player1)
-                    , inline: true
-                }
-                embed.fields[1] = {
-                    name: `${player2.name}`,
-                    value: playerInfo(player2)
-                    , inline: true
-                }
+                
 
 
-                duelEmbed.edit({ embeds: [embed], files: [attachment], components: [buttonMoveRow, buttonForfeitRow] })
-
-
-                let get_moves = await collect_moves(duelEmbed, player1, player2)
+                let get_moves = await collect_moves_duels(duelEmbed, player1, player2)
                 
 
 
                 player1.newMove(get_moves[0])
                 player2.newMove(get_moves[1])
                     
-
-                buttonDisable(true)
-                
-
-                duelEmbed.edit({ embeds: [embed], files: [attachment], components: [buttonMoveRow, buttonForfeitRow] })
-
-
                 //once the both players have selected their move, the move simulation function is activated
                 const moveSimulation = await moveWinner(player1, player2)
 
@@ -190,7 +178,7 @@ module.exports = {
 
                     //sending the speech of the move to the discord server.
                     var moveSpeech = await `**${moveSimulation[1]}**`
-                    commentaryMessage = await message.channel.send({ content: moveSpeech })
+                    duelEmbed.edit({ content: moveSpeech})
 
 
 
@@ -205,7 +193,6 @@ module.exports = {
 
                         //checking if there is a winner.
                         if (player1.hp === 0 || player2.hp === 0) {
-                            duelEnd = duelEnd()
                             duelStatus = false
                         }
 
@@ -224,14 +211,14 @@ module.exports = {
                                     inline: true
                                 }
                             )
-                        await commentaryMessage.edit({ embeds: [testEmbed] })
+                        await duelEmbed.edit({ embeds: [embed, testEmbed] })
 
 
                         //starting the next round or ending the duel if it's finished.
                         setTimeout(async () => {
                             player1.reset()
                             player2.reset()
-                            await commentaryMessage.edit({ embeds: [], content: `**Starting a new round...**` })
+                            await duelEmbed.edit({content: `**Starting a new round...**` })
                             setTimeout(() => game_function(), 1000)
                         }, 7000)
                     }, 10000)
